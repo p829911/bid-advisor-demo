@@ -299,8 +299,8 @@ function DetailPage({notice, back}: {notice: Notice; back: () => void}) {
                   ) : null
                 }
               />
-              <Area type="monotone" dataKey="crowd" stroke={C.orange} fill={C.orange} fillOpacity={0.12} strokeDasharray="3 3" name="경쟁 밀집(상대값)" />
-              <Area type="monotone" dataKey="prob" stroke={C.blue} fill={C.blue} fillOpacity={0.25} strokeWidth={2} name="1순위 확률" />
+              <Area isAnimationActive={false} type="monotone" dataKey="crowd" stroke={C.orange} fill={C.orange} fillOpacity={0.12} strokeDasharray="3 3" name="경쟁 밀집(상대값)" />
+              <Area isAnimationActive={false} type="monotone" dataKey="prob" stroke={C.blue} fill={C.blue} fillOpacity={0.25} strokeWidth={2} name="1순위 확률" />
               <ReferenceLine x={notice.lowerRate.toFixed(2)} stroke={C.tick} strokeDasharray="4 4" label={{value: '하한선', fill: C.tick, fontSize: 12}} />
               <ReferenceLine x={best.toFixed(2)} stroke={C.purple} label={{value: '추천', fill: C.purple, fontSize: 12}} />
             </AreaChart>
@@ -322,7 +322,7 @@ function DetailPage({notice, back}: {notice: Notice; back: () => void}) {
                 <CartesianGrid vertical={false} stroke={C.grid} />
                 <XAxis dataKey="bin" tick={tick} axisLine={false} tickLine={false} unit="%" />
                 <YAxis tick={tick} axisLine={false} tickLine={false} width={28} />
-                <Bar dataKey="n" fill={C.blue} radius={[4, 4, 0, 0]} name="건수" />
+                <Bar isAnimationActive={false} dataKey="n" fill={C.blue} radius={[4, 4, 0, 0]} name="건수" />
               </BarChart>
             </ResponsiveContainer>
           </VStack>

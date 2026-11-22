@@ -154,10 +154,13 @@ export function candidatesFor(n: Notice): Candidate[] {
     }
   }
   peaks.sort((a, b) => b.prob - a.prob);
-  const out = peaks.slice(0, 3);
+  const out: Candidate[] = [];
+  for (const pk of peaks) {
+    if (out.length < 3 && out.every(o => Math.abs(pk.rate - o.rate) >= 0.08)) out.push(pk);
+  }
   // 봉우리가 부족하면 최고점 주변으로 채운다
   while (out.length < 3 && out.length > 0) {
-    const near = c.filter(p => p.rate >= n.lowerRate + 0.05 && out.every(o => Math.abs(p.rate - o.rate) >= 0.03)).sort((a, b) => b.prob - a.prob)[0];
+    const near = c.filter(p => p.rate >= n.lowerRate + 0.05 && out.every(o => Math.abs(p.rate - o.rate) >= 0.08)).sort((a, b) => b.prob - a.prob)[0];
     out.push({rate: near.rate, prob: near.prob});
   }
   return out;
