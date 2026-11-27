@@ -31,6 +31,8 @@ export type Notice = {
   attachments: Attach[];
   changes: Change[];
   agencyNote: {past: number; avgBidders: string; topWinner: string; rebid: string};
+  history?: string; // 작년에 누가 땄나 · 직전 수행사
+  preDeadlines?: {k: string; v: string}[]; // 투찰보다 먼저인 마감
 };
 
 export const NOTICES: Notice[] = [
@@ -79,6 +81,12 @@ export const NOTICES: Notice[] = [
     ],
     changes: [],
     agencyNote: {past: 41, avgBidders: '3.4곳', topWinner: 'A업체 (14회)', rebid: '1순위 업체 다음 공고 재참여 92%'},
+    history: '작년 같은 사업(4차): 우리 회사 1순위 · 직전 3회 수행사 A업체→우리→우리 · 단독응찰·유찰 없음',
+    preDeadlines: [
+      {k: '입찰참가자격 등록', v: '12.02 (수) 18:00'},
+      {k: '공동수급협정서 제출', v: '12.02 (수) 18:00'},
+      {k: '투찰 개시', v: '12.02 (수) 12:00'},
+    ],
   },
   {
     id: 'n2',
@@ -190,15 +198,33 @@ export const NOTICES: Notice[] = [
 
 export type Alert = {
   id: string;
-  channel: '#새공고' | '#개찰결과';
+  channel: '#새공고' | '#개찰결과' | '#리포트';
   at: string;
-  kind: '새 공고' | '정정' | '취소' | '개찰 결과';
+  kind: '새 공고' | '정정' | '취소' | '개찰 결과' | '기초금액 발표' | '아침 요약' | '경쟁 업체 낙찰' | '마감 겹침';
+  phase2?: boolean;
   title: string;
   lines: string[];
   noticeId?: string;
 };
 
 export const ALERTS: Alert[] = [
+  {
+    id: 'a0',
+    channel: '#새공고',
+    at: '오늘 08:00',
+    kind: '아침 요약',
+    title: '오늘 맞춤 공고 6건',
+    lines: ['✅ 바로 가능 2건 — 폐어구 집중수거(바람시, D-7) · 침적쓰레기(남빛군, D-2)', '⚠️ 확인 필요 1건 — ○○읍 해양쓰레기(해솔군): 처리 품목 확인', '⛔ 제외 3건 — 소재지 제한 2건(청솔군·○○시), 건설폐기물 허가 필요 1건', '📅 오늘 마감 없음 · 내일 참가등록 마감 1건'],
+  },
+  {
+    id: 'a5',
+    channel: '#새공고',
+    at: '오늘 11:20',
+    kind: '기초금액 발표',
+    title: '○○항 침적쓰레기 수거 처리 용역',
+    lines: ['기초금액 3,190만 원 발표 · 예가 범위 ±3% · 하한율 88%', '투찰 마감 12/03 10:00 (D-2)', '→ 계산기 바로 열기'],
+    noticeId: 'n3',
+  },
   {
     id: 'a1',
     channel: '#새공고',
@@ -237,6 +263,24 @@ export const ALERTS: Alert[] = [
     kind: '취소',
     title: '○○천 하구 부유쓰레기 처리 용역',
     lines: ['발주처 사정으로 공고 취소'],
+  },
+  {
+    id: 'a6',
+    channel: '#새공고',
+    at: '어제 17:05',
+    kind: '마감 겹침',
+    title: '12/03 (목) 마감 2건 겹침',
+    lines: ['10:00 침적쓰레기(남빛군) · 12:00 연안 정화(모래군)', '서류 준비 일정 확인'],
+    phase2: true,
+  },
+  {
+    id: 'a7',
+    channel: '#개찰결과',
+    at: '그저께 11:10',
+    kind: '경쟁 업체 낙찰',
+    title: '관심 업체 B업체가 해솔군 공고 1순위',
+    lines: ['연안 부유쓰레기 처리 용역 · 참가 5곳 · B업체 해솔군 첫 1순위', '해솔군 판 변화로 월간 리포트에 반영'],
+    phase2: true,
   },
 ];
 
@@ -288,3 +332,77 @@ export const won = (n: number) =>
   n >= 100_000_000
     ? `${Math.floor(n / 100_000_000)}억 ${Math.round((n % 100_000_000) / 10_000).toLocaleString()}만 원`
     : `${Math.round(n / 10_000).toLocaleString()}만 원`;
+
+// ---- 기능 매트릭스 반영(PRD v1.1) 추가 예시 데이터 ----
+
+export type SearchRow = {id: string; title: string; agency: string; method: string; base: number; deadline: string; verdict: Verdict | '-'};
+export const SEARCH_ROWS: SearchRow[] = [
+  {id: 's1', title: '2027년 해양쓰레기 정화사업 ○○읍 폐기물처리 용역', agency: '해솔군', method: '소액수의견적', base: 48_320_000, deadline: '12.04', verdict: '확인 필요'},
+  {id: 's2', title: '해안가 폐어구 집중수거 처리 용역', agency: '바람시', method: '일반경쟁', base: 126_500_000, deadline: '12.08', verdict: '충족'},
+  {id: 's3', title: '○○항 침적쓰레기 수거 처리 용역', agency: '남빛군', method: '소액수의견적', base: 31_900_000, deadline: '12.03', verdict: '충족'},
+  {id: 's4', title: '공원 임목폐기물 처리 용역', agency: '모래군', method: '일반경쟁', base: 22_000_000, deadline: '12.07', verdict: '충족'},
+  {id: 's5', title: '석면해체 지정폐기물 처리 용역', agency: '○○교육지원청', method: '수의계약', base: 18_400_000, deadline: '12.06', verdict: '미충족'},
+];
+
+export type PreSpec = {id: string; stage: '발주계획' | '사전규격' | '본공고'; title: string; agency: string; when: string; note: string};
+export const PRESPECS: PreSpec[] = [
+  {id: 'p1', stage: '사전규격', title: '2027년 연안 해양쓰레기 수거 처리 용역', agency: '해솔군', when: '의견마감 12.05', note: '본공고 예상 12월 중순 · 작년 1순위 A업체'},
+  {id: 'p2', stage: '발주계획', title: '2027년 폐어구 회수 처리 용역', agency: '바람시', when: '발주 예정 2027.02', note: '예산 1억 8천만 원 · 관심 발주처'},
+  {id: 'p3', stage: '본공고', title: '○○항 침적쓰레기 수거 처리 용역', agency: '남빛군', when: '12.03 마감', note: '사전규격(11.20) → 본공고(11.29) 연결됨'},
+];
+
+export type Sched = {id: string; date: string; kind: '참가등록 마감' | '공동수급협정 마감' | '현장설명' | '투찰 마감' | '개찰'; title: string};
+export const SCHEDULE: Sched[] = [
+  {id: 'c1', date: '12.02 (수) 18:00', kind: '참가등록 마감', title: '○○읍 해양쓰레기 폐기물처리 용역'},
+  {id: 'c2', date: '12.03 (목) 10:00', kind: '투찰 마감', title: '○○항 침적쓰레기 수거 처리 용역'},
+  {id: 'c3', date: '12.03 (목) 11:00', kind: '개찰', title: '○○항 침적쓰레기 수거 처리 용역'},
+  {id: 'c4', date: '12.04 (금) 12:00', kind: '투찰 마감', title: '○○읍 해양쓰레기 폐기물처리 용역'},
+  {id: 'c5', date: '12.07 (월) 14:00', kind: '현장설명', title: '해안가 폐어구 집중수거 처리 용역'},
+  {id: 'c6', date: '12.08 (화) 10:00', kind: '투찰 마감', title: '해안가 폐어구 집중수거 처리 용역'},
+];
+
+export const BOARD: {col: string; items: string[]}[] = [
+  {col: '검토 중', items: ['해안가 폐어구 집중수거 처리 용역', '공원 임목폐기물 처리 용역']},
+  {col: '참가 신청', items: ['○○읍 해양쓰레기 폐기물처리 용역']},
+  {col: '투찰 완료', items: ['○○항 침적쓰레기 수거 처리 용역']},
+  {col: '결과', items: ['○○리 해안 정화 폐기물처리 용역 · 2위', '○○읍 해양쓰레기 처리 용역(4차) · 1순위']},
+];
+
+export type Award = {id: string; date: string; title: string; agency: string; bidders: number; winner: string; rate: string; amount: number};
+export const AWARDS: Award[] = [
+  {id: 'w1', date: '12.01', title: '○○리 해안 정화 폐기물처리 용역', agency: '해솔군', bidders: 4, winner: 'A업체', rate: '87.912%', amount: 41_830_000},
+  {id: 'w2', date: '11.30', title: '연안 부유쓰레기 처리 용역', agency: '바람시', bidders: 13, winner: 'B업체', rate: '87.806%', amount: 92_100_000},
+  {id: 'w3', date: '11.28', title: '어항 정화 폐기물처리 용역', agency: '남빛군', bidders: 3, winner: 'C업체', rate: '88.104%', amount: 27_450_000},
+  {id: 'w4', date: '11.27', title: '해양쓰레기 운반 처리 용역(3차)', agency: '해솔군', bidders: 4, winner: '우리 회사', rate: '87.955%', amount: 38_200_000},
+];
+
+export const MONTHLY_TOP = [
+  {id: 't1', rank: 1, name: 'A업체', wins: 6, region: '해솔군·남빛군'},
+  {id: 't2', rank: 2, name: '우리 회사', wins: 4, region: '해솔군'},
+  {id: 't3', rank: 3, name: 'B업체', wins: 3, region: '바람시'},
+  {id: 't4', rank: 4, name: 'C업체', wins: 3, region: '남빛군'},
+];
+
+// 발주처 사정률 분포(보여주기만 — 추천 아님)
+export const SAJEONG = [
+  {bin: '98.5', n: 2},
+  {bin: '99.0', n: 6},
+  {bin: '99.5', n: 11},
+  {bin: '100.0', n: 13},
+  {bin: '100.5', n: 7},
+  {bin: '101.0', n: 2},
+];
+
+export const DOCS = [
+  {id: 'd1', name: '폐기물 중간재활용업 허가증', until: '2027.03.31', left: '124일'},
+  {id: 'd2', name: '신용평가 등급확인서', until: '2026.12.20', left: '19일'},
+  {id: 'd3', name: '영업배상 책임보험', until: '2027.06.30', left: '211일'},
+  {id: 'd4', name: '공동인증서(사업자용)', until: '2026.12.10', left: '9일'},
+];
+
+export const LOWER_RATES = [
+  {id: 'l1', org: '지자체 용역(일반)', range: '추정가격 2억 원 미만', rate: '88%'},
+  {id: 'l2', org: '지자체 용역(일반)', range: '2억 원 이상 ~ 고시금액 미만', rate: '87.745%'},
+  {id: 'l3', org: '조달청 일반용역', range: '고시금액 미만', rate: '87.745%'},
+  {id: 'l4', org: '소액수의견적', range: '2인 이상 견적', rate: '88%'},
+];

@@ -29,16 +29,33 @@ import {
   DocumentMagnifyingGlassIcon,
   PaperClipIcon,
   ChatBubbleLeftRightIcon,
+  MagnifyingGlassIcon,
+  CalendarDaysIcon,
+  TrophyIcon,
+  CalculatorIcon,
 } from '@heroicons/react/24/outline';
 import {
   AGENCIES,
   ALERTS,
+  AWARDS,
+  BOARD,
+  DOCS,
+  LOWER_RATES,
+  MONTHLY_TOP,
+  PRESPECS,
+  SAJEONG,
+  SCHEDULE,
+  SEARCH_ROWS,
   MY_BIDS,
   NOTICES,
   PER_TON,
   RIVALS,
   won,
   type Alert,
+  type Award,
+  type PreSpec,
+  type Sched,
+  type SearchRow,
   type Check,
   type MyBid,
   type Notice,
@@ -46,7 +63,7 @@ import {
   type Verdict,
 } from './data';
 
-type Page = 'notices' | 'detail' | 'alerts' | 'history' | 'analysis' | 'settings';
+type Page = 'notices' | 'search' | 'detail' | 'schedule' | 'alerts' | 'history' | 'awards' | 'analysis' | 'tools' | 'settings';
 
 const C = {
   blue: 'var(--color-data-categorical-blue)',
@@ -255,6 +272,34 @@ function DetailPage({notice, back}: {notice: Notice; back: () => void}) {
         <Metric label="개찰" value={notice.opening.split(' ')[0]} hint={notice.opening} />
       </Grid>
 
+      {(notice.preDeadlines || notice.history) && (
+        <Grid columns={{minWidth: 300, max: 2, repeat: 'fit'}} gap={4}>
+          {notice.preDeadlines && (
+            <Card>
+              <VStack gap={2}>
+                <Heading level={4}>투찰보다 먼저인 마감</Heading>
+                <List density="compact">
+                  {notice.preDeadlines.map(d => (
+                    <ListItem key={d.k} label={d.k} endContent={<Badge variant="warning" label={d.v} />} />
+                  ))}
+                </List>
+              </VStack>
+            </Card>
+          )}
+          {notice.history && (
+            <Card>
+              <VStack gap={2}>
+                <Heading level={4}>작년에 누가 땄나</Heading>
+                <Text type="body">{notice.history}</Text>
+                <Text type="supporting" color="secondary">
+                  같은 발주처의 비슷한 공고명을 개찰 결과에서 찾아요.
+                </Text>
+              </VStack>
+            </Card>
+          )}
+        </Grid>
+      )}
+
       {notice.changes.length > 0 && (
         <Banner
           status="info"
@@ -381,6 +426,10 @@ function kindBadge(k: Alert['kind']) {
   if (k === '새 공고') return <Badge variant="blue" label="🆕 새 공고" />;
   if (k === '정정') return <Badge variant="warning" label="✏️ 정정" />;
   if (k === '취소') return <Badge variant="error" label="취소" />;
+  if (k === '기초금액 발표') return <Badge variant="cyan" label="💰 기초금액 발표" />;
+  if (k === '아침 요약') return <Badge variant="purple" label="☀️ 아침 요약" />;
+  if (k === '마감 겹침') return <Badge variant="orange" label="⏰ 마감 겹침" />;
+  if (k === '경쟁 업체 낙찰') return <Badge variant="pink" label="👀 경쟁 업체 낙찰" />;
   return <Badge variant="success" label="📊 개찰 결과" />;
 }
 
@@ -412,6 +461,7 @@ function AlertsPage({open}: {open: (id: string) => void}) {
                 <Text type="body" weight="semibold">
                   {a.title}
                 </Text>
+                {a.phase2 && <Badge variant="neutral" label="2차" />}
               </HStack>
               <VStack gap={1}>
                 {a.lines.map(l => (
@@ -479,6 +529,20 @@ function HistoryPage() {
       <Card>
         <Table<MyBid> data={MY_BIDS} columns={cols} idKey="id" density="balanced" hasHover verticalAlign="middle" />
       </Card>
+      <Card>
+        <VStack gap={3}>
+          <Heading level={4}>1순위는 이렇게 정해졌어요 — ○○리 해안 정화 폐기물처리 용역 (11.30)</Heading>
+          <List density="compact" listStyle="decimal">
+            <ListItem label="복수예비가격 15개 중 업체들이 가장 많이 뽑은 4개(3·7·9·12번) 평균 → 예정가격 4,754만 원 (사정률 99.82%)" />
+            <ListItem label="낙찰하한가 = 예정가격 × 88% = 4,183만 원" />
+            <ListItem label="하한가 이상 중 가장 낮은 금액 4,183.4만 원(A업체)이 1순위, 우리는 4,188.5만 원으로 2위 (차이 0.12%)" />
+            <ListItem label="하한가 근소 미달(0.1% 이내) 업체 1곳 · 단독응찰·유찰 아님" />
+          </List>
+          <Text type="supporting" color="secondary">
+            결과를 설명할 뿐 다음 가격을 추천하지는 않아요.
+          </Text>
+        </VStack>
+      </Card>
     </VStack>
   );
 }
@@ -496,6 +560,8 @@ function AnalysisPage() {
         <SegmentedControlItem value="agency" label="발주처" />
         <SegmentedControlItem value="rival" label="경쟁 업체" />
         <SegmentedControlItem value="price" label="톤당 단가" />
+        <SegmentedControlItem value="sajeong" label="사정률 분포" />
+        <SegmentedControlItem value="me" label="우리 회사 진단" />
       </SegmentedControl>
       {tab === 'agency' && (
         <Card>
@@ -562,6 +628,40 @@ function AnalysisPage() {
           </VStack>
         </Card>
       )}
+      {tab === 'sajeong' && (
+        <Card>
+          <VStack gap={3}>
+            <VStack gap={1}>
+              <Heading level={4}>해솔군 사정률 분포 (최근 2년 41건)</Heading>
+              <Text type="supporting" color="secondary">
+                예정가격이 어디쯤 나왔는지 보여주는 자료예요. 추첨으로 정해져서 다음 값을 맞히는 데 쓰면 안 돼요(10년 기록 검증 결과).
+              </Text>
+            </VStack>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={SAJEONG} margin={{top: 8, right: 12, left: 0, bottom: 4}}>
+                <CartesianGrid vertical={false} stroke={C.grid} />
+                <XAxis dataKey="bin" tick={tick} axisLine={false} tickLine={false} unit="%" />
+                <YAxis tick={tick} axisLine={false} tickLine={false} width={28} />
+                <Tooltip />
+                <Bar isAnimationActive={false} dataKey="n" fill={C.blue} radius={[4, 4, 0, 0]} name="건수" />
+              </BarChart>
+            </ResponsiveContainer>
+          </VStack>
+        </Card>
+      )}
+      {tab === 'me' && (
+        <VStack gap={4}>
+          <Grid columns={{minWidth: 150, max: 4, repeat: 'fit'}} gap={4}>
+            <Metric label="최근 1년 1순위율" value="25.0%" hint="관내 32.6% · 지역입찰 9.1%" />
+            <Metric label="0.1% 이내 근소 탈락" value="9건" hint="아깝게 2위" />
+            <Metric label="하한 미달" value="31건" hint="예정가격이 높게 나온 경우" />
+            <Metric label="놓친 공고(자격 충족)" value="4건" hint="알림 시작 후 0건 목표" />
+          </Grid>
+          <Text type="supporting" color="secondary">
+            진단만 보여줘요. &quot;다음엔 얼마로 쓰라&quot;는 추천은 하지 않아요.
+          </Text>
+        </VStack>
+      )}
       <Card>
         <VStack gap={2}>
           <Heading level={4}>월간 판 변화 리포트</Heading>
@@ -570,6 +670,260 @@ function AnalysisPage() {
           </Text>
         </VStack>
       </Card>
+    </VStack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 공고 검색 (전체 + 사전규격·발주계획)
+// ---------------------------------------------------------------------------
+
+function SearchPage({open}: {open: (id: string) => void}) {
+  const showToast = useToast();
+  const [tab, setTab] = useState('all');
+  const [q, setQ] = useState('폐기물');
+  const [paste, setPaste] = useState('');
+  const verdictCell = (v: Verdict | '-') => (v === '-' ? <Text type="body">-</Text> : verdictBadge(v));
+  return (
+    <VStack gap={6}>
+      <PageTitle title="공고 검색" desc="맞춤 조건 밖의 공고까지 직접 찾아요. 검색 결과에도 자격 판정이 붙어요." />
+      <SegmentedControl label="검색 종류" value={tab} onChange={v => setTab(String(v))}>
+        <SegmentedControlItem value="all" label="입찰 공고" />
+        <SegmentedControlItem value="pre" label="사전규격·발주계획 (2차)" />
+      </SegmentedControl>
+      {tab === 'all' ? (
+        <>
+          <Card>
+            <VStack gap={4}>
+              <Grid columns={{minWidth: 200, max: 3, repeat: 'fit'}} gap={4}>
+                <TextInput label="공고명·키워드" value={q} onChange={v => setQ(v)} />
+                <TextInput label="발주처" value="" onChange={() => {}} placeholder="예: 해솔군" />
+                <TextInput label="제외어" value="석면, 건설폐기물" onChange={() => {}} />
+              </Grid>
+              <HStack gap={2} wrap="wrap">
+                <Token label="용역" color="blue" />
+                <Token label="전남 · 제주" color="teal" />
+                <Token label="게시일 최근 30일" color="gray" />
+                <Token label="계약방법 전체" color="gray" />
+                <Button label="검색" size="sm" onClick={() => showToast({body: `데모: "${q}" 검색`, uniqueID: 'search'})} />
+              </HStack>
+              <Divider />
+              <HStack gap={2} vAlign="end" wrap="wrap">
+                <StackItem size="fill">
+                  <TextInput label="공고번호나 나라장터 주소 붙여넣기" value={paste} onChange={v => setPaste(v)} placeholder="R26BK01839317 또는 https://www.g2b.go.kr/..." />
+                </StackItem>
+                <Button label="바로 불러오기" variant="secondary" onClick={() => open('n1')} />
+              </HStack>
+            </VStack>
+          </Card>
+          <Card>
+            <Table<SearchRow>
+              data={SEARCH_ROWS}
+              idKey="id"
+              density="balanced"
+              hasHover
+              verticalAlign="middle"
+              columns={[
+                {key: 'title', header: '공고', width: {type: 'proportional', value: 3, minWidth: 260}},
+                {key: 'agency', header: '발주처'},
+                {key: 'method', header: '계약방법'},
+                {key: 'base', header: '기초금액', renderCell: r => <Text type="body">{won(r.base)}</Text>},
+                {key: 'deadline', header: '마감'},
+                {key: 'verdict', header: '자격', renderCell: r => verdictCell(r.verdict)},
+              ]}
+            />
+          </Card>
+        </>
+      ) : (
+        <Card>
+          <VStack gap={3}>
+            <Text type="supporting" color="secondary">
+              관심 키워드·발주처의 발주계획과 사전규격을 모아 보고, 본공고가 나오면 같은 사업끼리 이어 보여줘요(공고 전후 이야기).
+            </Text>
+            <Table<PreSpec>
+              data={PRESPECS}
+              idKey="id"
+              density="balanced"
+              columns={[
+                {
+                  key: 'stage',
+                  header: '단계',
+                  renderCell: r => <Badge variant={r.stage === '본공고' ? 'success' : r.stage === '사전규격' ? 'info' : 'neutral'} label={r.stage} />,
+                },
+                {key: 'title', header: '사업'},
+                {key: 'agency', header: '발주처'},
+                {key: 'when', header: '일정'},
+                {key: 'note', header: '메모'},
+              ]}
+            />
+          </VStack>
+        </Card>
+      )}
+    </VStack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 일정 (캘린더 + 진행 보드)
+// ---------------------------------------------------------------------------
+
+function kindVariant(k: Sched['kind']) {
+  if (k === '투찰 마감') return 'error' as const;
+  if (k === '개찰') return 'success' as const;
+  if (k === '현장설명') return 'info' as const;
+  return 'warning' as const;
+}
+
+function SchedulePage() {
+  const showToast = useToast();
+  return (
+    <VStack gap={6}>
+      <PageTitle title="일정" desc="관심 공고에 담으면 참가등록·공동수급협정·현장설명·투찰 마감·개찰이 자동으로 일정에 들어가요." />
+      <HStack gap={2} wrap="wrap">
+        <Button label="휴대폰 캘린더에 구독(ICS)" variant="secondary" size="sm" onClick={() => showToast({body: '데모: 구독 주소를 복사했어요. 휴대폰 캘린더에 추가하면 자동 표시돼요.', uniqueID: 'ics'})} />
+        <Badge variant="warning" label="12/03 마감 2건 겹침 (2차: 경고)" />
+      </HStack>
+      <Card>
+        <VStack gap={3}>
+          <Heading level={4}>다가오는 일정</Heading>
+          <List density="compact">
+            {SCHEDULE.map(s => (
+              <ListItem key={s.id} label={s.title} description={s.date} endContent={<Badge variant={kindVariant(s.kind)} label={s.kind} />} />
+            ))}
+          </List>
+        </VStack>
+      </Card>
+      <VStack gap={2}>
+        <Heading level={4}>진행 보드</Heading>
+        <Grid columns={{minWidth: 200, max: 4, repeat: 'fit'}} gap={4}>
+          {BOARD.map(c => (
+            <Card key={c.col}>
+              <VStack gap={2}>
+                <HStack hAlign="between" vAlign="center">
+                  <Text type="body" weight="semibold">
+                    {c.col}
+                  </Text>
+                  <Badge variant="neutral" label={String(c.items.length)} />
+                </HStack>
+                {c.items.map(i => (
+                  <Card key={i} padding={3}>
+                    <Text type="supporting">{i}</Text>
+                  </Card>
+                ))}
+              </VStack>
+            </Card>
+          ))}
+        </Grid>
+      </VStack>
+    </VStack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 낙찰 정보
+// ---------------------------------------------------------------------------
+
+function AwardsPage() {
+  return (
+    <VStack gap={6}>
+      <PageTitle title="낙찰 정보" desc="관심 지역·업종의 최근 개찰 결과를 발주처·업체로 찾아봐요." />
+      <Card>
+        <Table<Award>
+          data={AWARDS}
+          idKey="id"
+          density="balanced"
+          hasHover
+          columns={[
+            {key: 'date', header: '개찰'},
+            {key: 'title', header: '공고', width: {type: 'proportional', value: 3, minWidth: 240}},
+            {key: 'agency', header: '발주처'},
+            {key: 'bidders', header: '참가', renderCell: a => <Text type="body">{a.bidders}곳</Text>},
+            {key: 'winner', header: '1순위', renderCell: a => (a.winner === '우리 회사' ? <Badge variant="success" label="우리 회사" /> : <Text type="body">{a.winner}</Text>)},
+            {key: 'rate', header: '투찰률'},
+            {key: 'amount', header: '1순위 금액', renderCell: a => <Text type="body">{won(a.amount)}</Text>},
+          ]}
+        />
+      </Card>
+      <Card>
+        <VStack gap={3}>
+          <HStack gap={2} vAlign="center">
+            <Heading level={4}>이번 달 1순위 업체 순위 (관심 지역)</Heading>
+            <Badge variant="purple" label="2차" />
+          </HStack>
+          <Table
+            data={MONTHLY_TOP}
+            idKey="id"
+            density="compact"
+            columns={[
+              {key: 'rank', header: '순위'},
+              {key: 'name', header: '업체'},
+              {key: 'wins', header: '1순위'},
+              {key: 'region', header: '주 발주처'},
+            ]}
+          />
+        </VStack>
+      </Card>
+    </VStack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 계산기·자료
+// ---------------------------------------------------------------------------
+
+function ToolsPage() {
+  const [base, setBase] = useState('31900000');
+  const [sj, setSj] = useState('100.000');
+  const [lr, setLr] = useState('88');
+  const b = Number(base.replace(/,/g, '')) || 0;
+  const plan = (b * (Number(sj) || 0)) / 100;
+  const amt = Math.ceil((plan * (Number(lr) || 0)) / 100);
+  return (
+    <VStack gap={6}>
+      <PageTitle title="계산기·자료" desc="공고를 고르면 기초금액·하한율이 자동으로 채워져요. 사정률은 대표님이 직접 넣어요(추천하지 않아요)." />
+      <Grid columns={{minWidth: 300, max: 2, repeat: 'fit'}} gap={4}>
+        <Card>
+          <VStack gap={4}>
+            <Heading level={4}>투찰금액 계산기</Heading>
+            <Text type="supporting" color="secondary">
+              불러온 공고: ○○항 침적쓰레기 수거 처리 용역
+            </Text>
+            <TextInput label="기초금액(원)" value={base} onChange={v => setBase(v)} />
+            <TextInput label="사정률(%) — 직접 입력" value={sj} onChange={v => setSj(v)} />
+            <TextInput label="낙찰하한율(%)" value={lr} onChange={v => setLr(v)} />
+            <Divider />
+            <VStack gap={1}>
+              <Text type="supporting" color="secondary">
+                예정가격(가정) {Math.round(plan).toLocaleString()}원 × 하한율 {lr}%
+              </Text>
+              <Text type="display-3" weight="semibold">
+                투찰금액 {amt.toLocaleString()}원
+              </Text>
+              <Text type="supporting" color="secondary">
+                원 단위 절상 · A값 적용 공고는 A값을 빼고 계산해요
+              </Text>
+            </VStack>
+          </VStack>
+        </Card>
+        <Card>
+          <VStack gap={3}>
+            <Heading level={4}>낙찰하한율표</Heading>
+            <Table
+              data={LOWER_RATES}
+              idKey="id"
+              density="compact"
+              columns={[
+                {key: 'org', header: '구분'},
+                {key: 'range', header: '금액'},
+                {key: 'rate', header: '하한율'},
+              ]}
+            />
+            <Text type="supporting" color="secondary">
+              예시 값 · 실제 표는 기준 개정 이력과 함께 보여줘요. 적격심사 점수 계산기는 3차(선택).
+            </Text>
+          </VStack>
+        </Card>
+      </Grid>
     </VStack>
   );
 }
@@ -634,7 +988,20 @@ function SettingsPage() {
               <Token label="기초금액 1,000만 원 이상" color="gray" />
             </HStack>
           </VStack>
-          <Button label="조건 추가" variant="secondary" size="sm" />
+          <VStack gap={2}>
+            <Text type="body" weight="semibold">
+              제외어 · 제외 발주처
+            </Text>
+            <HStack gap={2} wrap="wrap">
+              <Token label="석면" color="red" />
+              <Token label="음식물" color="red" />
+              <Token label="건설폐기물" color="red" />
+            </HStack>
+          </VStack>
+          <HStack gap={2} wrap="wrap">
+            <Button label="조건 추가" variant="secondary" size="sm" />
+            <Button label="투찰 이력으로 조건 추천받기" variant="secondary" size="sm" />
+          </HStack>
         </VStack>
       </Card>
       <Card>
@@ -644,8 +1011,31 @@ function SettingsPage() {
           <Switch label="정정 · 취소" description="바뀐 항목만 · #새공고" value={alerts.change} onChange={v => setAlerts({...alerts, change: v})} />
           <Switch label="개찰 결과" description="내 순위·1순위와 차이 · #개찰결과" value={alerts.result} onChange={v => setAlerts({...alerts, result: v})} />
           <Switch label="마감 임박" description="마감 전날 저녁 (기본 꺼짐)" value={alerts.deadline} onChange={v => setAlerts({...alerts, deadline: v})} />
+          <Switch label="아침 요약" description="매일 08:00 · 바로 가능 / 확인 필요 / 제외" value={true} onChange={() => {}} />
+          <Switch label="기초금액 발표" description="관심 공고 · #새공고" value={true} onChange={() => {}} />
           <Text type="supporting" color="secondary">
-            자격 미충족 공고는 알림에서 빼고 이 화면에서만 보여줘요(논의 중).
+            함께 받는 사람: 대표님 · 직원 1명 (디스코드 서버 멤버). 자격 미충족 공고는 알림에서 빼고 웹에서만 보여줘요(논의 중).
+          </Text>
+        </VStack>
+      </Card>
+      <Card>
+        <VStack gap={3}>
+          <HStack gap={2} vAlign="center">
+            <Heading level={4}>회사 서류 만료일</Heading>
+            <Badge variant="purple" label="2차" />
+          </HStack>
+          <Table
+            data={DOCS}
+            idKey="id"
+            density="compact"
+            columns={[
+              {key: 'name', header: '서류'},
+              {key: 'until', header: '만료일'},
+              {key: 'left', header: '남은 기간'},
+            ]}
+          />
+          <Text type="supporting" color="secondary">
+            만료 30일·7일 전에 디스코드로 알려줘요.
           </Text>
         </VStack>
       </Card>
@@ -659,9 +1049,13 @@ function SettingsPage() {
 
 const NAV: {key: Exclude<Page, 'detail'>; label: string; icon: typeof ChartBarIcon}[] = [
   {key: 'notices', label: '맞춤 공고', icon: DocumentMagnifyingGlassIcon},
+  {key: 'search', label: '공고 검색', icon: MagnifyingGlassIcon},
+  {key: 'schedule', label: '일정', icon: CalendarDaysIcon},
   {key: 'alerts', label: '디스코드 알림', icon: BellAlertIcon},
   {key: 'history', label: '나의 투찰 기록', icon: ClipboardDocumentListIcon},
+  {key: 'awards', label: '낙찰 정보', icon: TrophyIcon},
   {key: 'analysis', label: '분석', icon: ChartBarIcon},
+  {key: 'tools', label: '계산기', icon: CalculatorIcon},
   {key: 'settings', label: '설정', icon: Cog6ToothIcon},
 ];
 
@@ -703,6 +1097,10 @@ export default function App() {
       {page === 'alerts' && <AlertsPage open={open} />}
       {page === 'history' && <HistoryPage />}
       {page === 'analysis' && <AnalysisPage />}
+      {page === 'search' && <SearchPage open={open} />}
+      {page === 'schedule' && <SchedulePage />}
+      {page === 'awards' && <AwardsPage />}
+      {page === 'tools' && <ToolsPage />}
       {page === 'settings' && <SettingsPage />}
     </VStack>
   );
@@ -718,11 +1116,11 @@ export default function App() {
                 {brand}
                 <Icon icon={BellAlertIcon} size="md" color="secondary" />
               </HStack>
-              <SegmentedControl label="메뉴" value={navKey} onChange={v => go(v as Page)} layout="fill">
+              <HStack gap={2} wrap="wrap">
                 {NAV.map(n => (
-                  <SegmentedControlItem key={n.key} value={n.key} label={n.label.split(' ').pop() ?? n.label} />
+                  <Button key={n.key} label={n.label} size="sm" variant={navKey === n.key ? 'primary' : 'secondary'} onClick={() => go(n.key)} />
                 ))}
-              </SegmentedControl>
+              </HStack>
               {body}
             </VStack>
           </LayoutContent>
