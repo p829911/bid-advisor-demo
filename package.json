@@ -13,6 +13,7 @@
     "@astryxdesign/cli": "^0.7.17",
     "@astryxdesign/core": "^0.7.17",
     "@astryxdesign/theme-neutral": "^0.7.17",
+    "@astryxdesign/theme-stone": "^0.7.17",
     "@heroicons/react": "^2.2.0",
     "@stylexjs/stylex": "^0.19.2",
     "react": "^19.3.1",
