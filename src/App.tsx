@@ -184,7 +184,7 @@ function HomePage({open, go}: {open: (id: string) => void; go: (p: Page) => void
         </Text>
       </VStack>
 
-      <Grid columns={{minWidth: 180, max: 4, repeat: 'fit'}} gap={4}>
+      <Grid columns={{minWidth: 140, max: 4, repeat: "fit"}} gap={4}>
         <StatTile tone="blue" label="오늘 새 맞춤 공고" value="6건" hint="바로 가능 2 · 확인 1 · 제외 3" />
         <StatTile tone="green" label="자격 충족 · 진행 중" value="3건" hint="이번 주 마감 3건" />
         <StatTile tone="orange" label="가장 빠른 마감" value="D-1" hint="참가등록 12/02 18:00" />
