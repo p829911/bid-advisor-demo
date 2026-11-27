@@ -125,17 +125,18 @@ function NoticesPage({open}: {open: (id: string) => void}) {
     {
       key: 'title',
       header: '공고',
+      width: {type: 'proportional', value: 3, minWidth: 280},
       renderCell: n => (
         <VStack gap={1}>
-          <HStack gap={2} vAlign="center">
+          <Text type="body" weight="semibold">
+            {n.title}
+          </Text>
+          <HStack gap={2} vAlign="center" wrap="wrap">
             {n.isNew && <Badge variant="blue" label="새 공고" />}
-            <Text type="body" weight="semibold">
-              {n.title}
+            <Text type="supporting" color="secondary">
+              {n.agency} · {n.qty}
             </Text>
           </HStack>
-          <Text type="supporting" color="secondary">
-            {n.agency} · {n.qty}
-          </Text>
         </VStack>
       ),
     },
