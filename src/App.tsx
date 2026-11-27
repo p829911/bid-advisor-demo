@@ -1091,7 +1091,7 @@ export default function App() {
 
   const body = (
     <VStack gap={6}>
-      <Banner status="warning" title="완성 화면 예시(데모)예요" description="기관·업체 이름과 숫자는 모두 예시예요. 실제로는 나라장터 공고·개찰 결과와 첨부파일 요약으로 채워져요. PRD v1.0 기준." />
+      <Banner status="warning" title="완성 화면 예시(데모)예요" description="기관·업체 이름과 숫자는 모두 예시예요. 실제로는 나라장터 공고·개찰 결과와 첨부파일 요약으로 채워져요. PRD v1.1 기준." />
       {page === 'notices' && <NoticesPage open={open} />}
       {page === 'detail' && <DetailPage notice={notice} back={() => go('notices')} />}
       {page === 'alerts' && <AlertsPage open={open} />}
